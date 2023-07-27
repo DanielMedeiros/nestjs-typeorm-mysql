@@ -15,12 +15,13 @@ import { CreateUserDTO } from './dto/create-user.dto';
 import { UpdatePutUserDTO } from './dto/update-put-user.dto';
 import { UpdatePatchUserDTO } from './dto/update-patch-user.dto';
 import { UserService } from './user.service';
-import { LogInterceptor } from 'src/interceptors/log.interceptor';
-import { ParamId } from 'src/decorators/param-id.decorator';
-import { Roles } from 'src/decorators/roles.decorator';
-import { Role } from 'src/enums/role.enum';
-import { RoleGuard } from 'src/guards/role.guard';
-import { AuthGuard } from 'src/guards/auth.guard';
+
+import { LogInterceptor } from '../interceptors/log.interceptor';
+import { ParamId } from '../decorators/param-id.decorator';
+import { Roles } from '../decorators/roles.decorator';
+import { Role } from '../enums/role.enum';
+import { RoleGuard } from '../guards/role.guard';
+import { AuthGuard } from '../guards/auth.guard';
 
 // Para todas as rotas
 
@@ -40,19 +41,22 @@ export class UserController {
   @Roles(Role.Admin, Role.User)
   @Get()
   async read() {
+    console.log('teste :>> ');
     return this.userService.list();
   }
 
   @Roles(Role.Admin)
   @Get(':id')
   async show(@ParamId('id', ParseIntPipe) id: number) {
-    console.log('id :>> ', id);
     return this.userService.show(id);
   }
 
   @Roles(Role.Admin)
   @Put(':id')
-  async update(@Body() data: UpdatePutUserDTO, @Param('id', ParseIntPipe) id) {
+  async update(
+    @Body() data: UpdatePutUserDTO,
+    @ParamId('id', ParseIntPipe) id,
+  ) {
     return this.userService.update(id, data);
   }
 
@@ -67,7 +71,9 @@ export class UserController {
 
   @Roles(Role.Admin)
   @Delete(':id')
-  async delete(@Param('id', ParseIntPipe) id) {
-    return this.userService.delete(id);
+  async delete(@ParamId('id', ParseIntPipe) id) {
+    return {
+      success: await this.userService.delete(id),
+    };
   }
 }

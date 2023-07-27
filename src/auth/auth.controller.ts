@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Post,
-  Headers,
   UseGuards,
   UseInterceptors,
   UploadedFile,
@@ -16,34 +15,33 @@ import { AuthLoginDTO } from './dto/auth-login.dto';
 import { AuthForgetDTO } from './dto/auth-forget.dto';
 import { AuthRegisterDTO } from './dto/auth-register.dto';
 import { AuthResetDTO } from './dto/auth-reset.dto';
-import { UserService } from 'src/user/user.service';
+
 import { AuthService } from './auth.service';
-import { AuthMeDTO } from './dto/auth-me.dto';
-import { AuthGuard } from 'src/guards/auth.guard';
-import { User } from 'src/decorators/user.decorator';
+//import { AuthMeDTO } from './dto/auth-me.dto';
 import {
   FileInterceptor,
   FilesInterceptor,
   FileFieldsInterceptor,
 } from '@nestjs/platform-express';
-import { join } from 'path';
-import { FileService } from 'src/file/file.service';
+import { FileService } from '../file/file.service';
+import { AuthGuard } from '../guards/auth.guard';
+import { User } from '../decorators/user.decorator';
+import { UserEntity } from '../user/entity/user.entity';
 
 @Controller('auth')
 export class AuthController {
   constructor(
-    private readonly userService: UserService,
     private readonly authService: AuthService,
     private readonly fileService: FileService,
   ) {}
 
   @Post('login')
   async login(@Body() { email, password }: AuthLoginDTO) {
-    console.log('login 1:>> ');
     return this.authService.login(email, password);
   }
 
   @Post('register')
+  // AuthRegisterDTO
   async register(@Body() body: AuthRegisterDTO) {
     return this.authService.register(body);
   }
@@ -60,8 +58,10 @@ export class AuthController {
 
   @UseGuards(AuthGuard)
   @Post('me')
-  async me(@User('id') user) {
-    return { user };
+  //Retornar apenas o id
+  //async me(@User('id') user: UserEntity) {
+  async me(@User() user: UserEntity) {
+    return user;
   }
 
   @UseInterceptors(FileInterceptor('file'))
@@ -79,17 +79,10 @@ export class AuthController {
     )
     photo: Express.Multer.File,
   ) {
-    const path = join(
-      __dirname,
-      '..',
-      '..',
-      'storage',
-      'photos',
-      `photo-${user}.png`,
-    );
+    const filename = `photo-${user}.png`;
 
     try {
-      this.fileService.upload(photo, path);
+      this.fileService.upload(photo, filename);
       return { success: true };
     } catch (error) {
       throw new BadRequestException('Erro: ', error);
